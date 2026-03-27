@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="en">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<head>
+<meta charset="UTF-8">
+<title>Secure File Sharing</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+body{
+background:#f5f7fa;
+}
+
+.container-box{
+margin-top:40px;
+background:white;
+padding:30px;
+border-radius:10px;
+box-shadow:0 0 10px rgba(0,0,0,0.1);
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2 class="text-center mt-4">Secure File Sharing Dashboard</h2>
+
+<div class="text-end">
+<button class="btn btn-info" onclick="loadProfile()">Profile</button>
+<button class="btn btn-secondary" onclick="logout()">Logout</button>
+</div>
+
+<div class="container-box">
+
+<!-- Drag Drop Area -->
+
+<div id="dropArea" style="
+border:2px dashed #007bff;
+padding:30px;
+text-align:center;
+margin-bottom:15px;
+border-radius:10px;
+background:#f8f9fa;
+">
+
+Drag & Drop File Here
+
+</div>
+<h5>Storage Usage</h5>
+
+<div class="progress mb-3">
+
+<div id="storageBar"
+class="progress-bar bg-success"
+style="width:0%">
+0%
+</div>
+
+</div>
+<!-- Upload Section -->
+
+<input type="file" id="fileInput" class="form-control">
+
+<button class="btn btn-primary mt-2" onclick="uploadFile()">Upload File</button>
+
+<div class="progress mt-3" style="height:20px;">
+<div id="uploadProgress"
+class="progress-bar progress-bar-striped progress-bar-animated"
+style="width:0%">
+0%
+</div>
+</div>
+
+<hr>
+
+<!-- Search -->
+
+<input 
+type="text" 
+id="searchInput" 
+class="form-control mb-3" 
+placeholder="Search files..."
+onkeyup="applyFilters()">
+
+<select id="typeFilter" class="form-select mb-3" onchange="applyFilters()">
+<option value="">All Types</option>
+<option value="image">Images</option>
+<option value="video">Videos</option>
+<option value="pdf">PDF</option>
+<option value="doc">Documents</option>
+<option value="zip">Zip</option>
+</select>
+
+<!-- Sort -->
+
+<select id="sortSelect" class="form-select mb-3" onchange="applyFilters()">
+<option value="">Sort Files</option>
+<option value="name">Sort by Name</option>
+<option value="size">Sort by Size</option>
+<option value="type">Sort by Type</option>
+</select>
+<p id="fileCount"></p>
+<h4>Files</h4>
+
+<ul class="nav nav-tabs mb-3">
+  <li class="nav-item">
+<button class="nav-link" id="trashTab" onclick="showTab('trash')">
+Trash
+</button>
+</li>  
+  <li class="nav-item">
+    <button class="nav-link active" id="myTab" onclick="showTab('my')">
+      My Files
+    </button>
+  </li>
+  <li class="nav-item">
+    <button class="nav-link" id="sharedTab" onclick="showTab('shared')">
+      Shared Files
+    </button>
+  </li>
+</ul>
+
+<!-- MY FILES -->
+<div id="myFilesSection">
+<table class="table table-bordered">
+<thead>
+<tr>
+<th>⭐</th>
+<th>File Name</th>
+<th>Size</th>
+<th>Preview</th>
+<th>Download</th>
+<th>Rename</th>
+<th>Share</th>
+<th>Link</th>
+<th>Delete</th>
+</tr>
+</thead>
+<tbody id="myFileList"></tbody>
+</table>
+</div>
+
+<!-- SHARED FILES -->
+<div id="sharedFilesSection" style="display:none;">
+<table class="table table-bordered">
+<thead>
+<tr>
+<th>File Name</th>
+<th>Size</th>
+<th>Preview</th>
+<th>Download</th>
+<th>Remove</th>
+</tr>
+</thead>
+<tbody id="sharedFileList"></tbody>
+</table>
+</div>
+
+<div id="trashSection" style="display:none;">
+<table class="table table-bordered">
+<thead>
+<tr>
+<th>File Name</th>
+<th>Restore</th>
+<th>Delete Forever</th>
+</tr>
+</thead>
+<tbody id="trashList"></tbody>
+</table>
+</div>
+<!-- Preview Modal -->
+
+<div id="previewModal" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.7);
+">
+
+<div style="
+background:white;
+width:80%;
+height:80%;
+margin:5% auto;
+padding:20px;
+border-radius:10px;
+">
+
+<button onclick="closePreview()" class="btn btn-danger">Close</button>
+
+<div id="previewContent" style="width:100%;height:90%;overflow:auto;"></div>
+
+</div>
+
+</div>
+
+<div id="profileModal" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+">
+
+<div style="
+background:white;
+width:400px;
+margin:10% auto;
+padding:20px;
+border-radius:10px;
+text-align:center;
+">
+
+<h4>User Profile</h4>
+
+<p><b>Name:</b> <span id="profileName"></span></p>
+<p><b>Email:</b> <span id="profileEmail"></span></p>
+
+<button class="btn btn-danger" onclick="closeProfile()">Close</button>
+
+</div>
+
+</div>
+
+<script>
+
+const API = "https://fileshare-backend-9tyy.onrender.com//api";
+let allFiles = [];
+let favoriteFiles = [];
+async function uploadFile(){
+
+const fileInput = document.getElementById("fileInput");
+const file = fileInput.files[0];
+
+if(!file){
+alert("Select a file");
+return;
+}
+
+const formData = new FormData();
+formData.append("file",file);
+
+const progressBar = document.getElementById("uploadProgress");
+
+const xhr = new XMLHttpRequest();
+
+xhr.open("POST", API+"/upload", true);
+
+xhr.setRequestHeader("Authorization","Bearer " + localStorage.getItem("token"));
+
+xhr.upload.onprogress = function(e){
+
+if(e.lengthComputable){
+
+let percent = (e.loaded / e.total) * 100;
+
+progressBar.style.width = percent + "%";
+progressBar.innerText = Math.round(percent) + "%";
+
+}
+
+};
+
+xhr.onload = function(){
+
+progressBar.style.width="0%";
+progressBar.innerText="0%";
+
+showToast("File uploaded successfully");
+
+loadFiles();
+loadStorage();
+};
+
+xhr.send(formData);
+
+}
+
+function getFileIcon(filename){
+
+const ext = filename.split('.').pop().toLowerCase();
+
+switch(ext){
+
+case "pdf": return "📄";
+case "png": return "🖼";
+case "jpg": return "🖼";
+case "mkv": return "🎥";
+case "mp4": return "🎥";
+case "jpeg": return "🖼";
+case "gif": return "🖼";
+case "doc":
+case "docx": return "📝";
+case "xls":
+case "xlsx": return "📊";
+case "zip":
+case "rar": return "🗜";
+default: return "📁";
+
+}
+
+}
+
+async function loadFiles(){
+
+const res = await fetch(API + "/files",{
+headers:{
+Authorization: "Bearer " + localStorage.getItem("token")
+}
+});
+
+const data = await res.json();
+
+allFiles = data.myFiles || [];
+
+displayMyFiles(allFiles);
+displaySharedFiles(data.sharedFiles || []);
+
+}
+
+function searchFiles(){
+
+const query = document.getElementById("searchInput").value.toLowerCase();
+
+const filtered = allFiles.filter(file =>
+file.name.toLowerCase().includes(query)
+);
+
+displayMyFiles(filtered);
+
+}
+
+function sortFiles(){
+
+const option = document.getElementById("sortSelect").value;
+
+let sorted = [...allFiles];
+
+if(option === "name"){
+sorted.sort((a,b)=> a.name.localeCompare(b.name));
+}
+
+if(option === "size"){
+sorted.sort((a,b)=> (a.size || 0) - (b.size || 0));
+}
+
+if(option === "type"){
+sorted.sort((a,b)=>{
+const extA = a.name.split('.').pop();
+const extB = b.name.split('.').pop();
+return extA.localeCompare(extB);
+});
+}
+
+displayMyFiles(sorted);
+
+}
+function displayFiles(files){
+
+const table = document.getElementById("fileList");
+
+table.innerHTML = "";
+
+files.forEach(file=>{
+
+const row = document.createElement("tr");
+
+row.innerHTML = `
+<td>${getFileIcon(file.name)} ${file.name.split('-').slice(1).join('-')}</td>
+<td>${formatSize(file.size)}</td>
+
+<td>
+<button class="btn btn-info btn-sm"
+onclick="previewFile('${file.name}')">
+Preview
+</button>
+</td>
+
+<td>
+<a class="btn btn-success btn-sm"
+href="${API}/download/${encodeURIComponent(file.name)}">
+Download
+</a>
+</td>
+
+<td>
+<button class="btn btn-warning btn-sm"
+onclick="renameFile('${file.name}')">
+Rename
+</button>
+</td>
+
+<td>
+<button class="btn btn-primary btn-sm"
+onclick="shareFile('${file.name}')">
+Share
+</button>
+</td>
+
+<td>
+<button class="btn btn-dark btn-sm"
+onclick="generateLink('${file.name}')">
+Link
+</button>
+</td>
+
+<td>
+<button class="btn btn-danger btn-sm deleteBtn"
+data-name="${file.name}">
+Delete
+</button>
+</td>
+`;
+
+table.appendChild(row);
+
+});
+
+}
+
+
+async function deleteFile(filename){
+
+await fetch(API+"/delete/"+encodeURIComponent(filename),{
+method:"DELETE",
+headers:{
+Authorization: "Bearer " + localStorage.getItem("token")
+}
+});
+
+showToast("Moved to trash");
+
+/* 🔥 ALL UPDATES */
+await loadFiles();    // My Files refresh
+await loadTrash();    // Trash refresh
+await loadStorage();  // Storage update (IMPORTANT)
+
+}
+
+async function permanentDelete(name){
+
+await fetch(API+"/delete-permanent/"+encodeURIComponent(name),{
+method:"DELETE",
+headers:{
+Authorization:"Bearer " + localStorage.getItem("token")
+}
+});
+
+showToast("Deleted permanently");
+
+await loadTrash();
+await loadStorage();
+
+}
+
+async function restoreFile(name){
+
+await fetch(API+"/restore",{
+method:"POST",
+headers:{
+"Content-Type":"application/json",
+Authorization:"Bearer " + localStorage.getItem("token")
+},
+body: JSON.stringify({ fileName: name })
+});
+
+showToast("File restored");
+
+await loadTrash();
+await loadFiles();
+
+}
+
+async function loadTrash(){
+
+const res = await fetch(API + "/trash",{
+headers:{
+Authorization: "Bearer " + localStorage.getItem("token")
+}
+});
+
+const data = await res.json();
+
+const table = document.getElementById("trashList");
+table.innerHTML = "";
+
+if(data.length === 0){
+table.innerHTML = `<tr><td colspan="3">Trash empty</td></tr>`;
+return;
+}
+
+data.forEach(file=>{
+const row = document.createElement("tr");
+
+row.innerHTML = `
+<td>${file.name}</td>
+<td><button onclick="restoreFile('${file.name}')">Restore</button></td>
+<td><button onclick="permanentDelete('${file.name}')">Delete Forever</button></td>
+`;
+
+table.appendChild(row);
+});
+
+}
+
+function previewFile(filename){
+
+const modal = document.getElementById("previewModal");
+const content = document.getElementById("previewContent");
+
+const ext = filename.split('.').pop().toLowerCase();
+
+const fileURL = API + "/view/" + encodeURIComponent(filename);
+
+content.innerHTML="";
+
+if(["png","jpg","jpeg","gif"].includes(ext)){
+content.innerHTML=`<img src="${fileURL}" style="max-width:100%">`;
+}
+
+else if(ext==="pdf"){
+content.innerHTML=`<iframe src="${fileURL}" style="width:100%;height:100%"></iframe>`;
+}
+
+modal.style.display="block";
+
+}
+function closePreview(){
+
+document.getElementById("previewModal").style.display = "none";
+
+document.getElementById("previewContent").innerHTML="";
+
+}
+
+function logout(){
+localStorage.removeItem("token");
+window.location="login.html";
+}
+
+/* Drag Drop */
+
+const dropArea = document.getElementById("dropArea");
+
+dropArea.addEventListener("dragover",(e)=>{
+e.preventDefault();
+dropArea.style.background="#e3f2fd";
+});
+
+dropArea.addEventListener("dragleave",(e)=>{
+dropArea.style.background="#f8f9fa";
+});
+
+dropArea.addEventListener("drop",(e)=>{
+e.preventDefault();
+dropArea.style.background="#f8f9fa";
+const file = e.dataTransfer.files[0];
+uploadDroppedFile(file);
+});
+
+async function uploadDroppedFile(file){
+
+const formData = new FormData();
+formData.append("file",file);
+
+await fetch(API+"/upload",{
+method:"POST",
+headers:{
+Authorization:"Bearer " + localStorage.getItem("token")
+},
+body:formData
+});
+
+showToast("File uploaded");
+
+loadFiles();
+loadStorage();
+
+}
+
+window.onload = async function(){
+await loadFavorites();   // ⭐ FIRST
+await loadFiles();       // then files
+await loadStorage();
+};
+async function loadFavorites(){
+
+try{
+
+const res = await fetch(API + "/favorites",{
+headers:{
+Authorization: "Bearer " + localStorage.getItem("token")
+}
+});
+
+if(!res.ok){
+console.error("Favorites fetch failed");
+return;
+}
+
+const data = await res.json();
+
+favoriteFiles = data.favorites || [];
+
+}catch(err){
+console.error("Favorites error:", err);
+}
+
+}
+
+async function loadProfile(){
+
+const res = await fetch(API + "/profile",{
+headers:{
+Authorization:"Bearer " + localStorage.getItem("token")
+}
+});
+
+const data = await res.json();
+
+document.getElementById("profileName").innerText = data.name;
+document.getElementById("profileEmail").innerText = data.email;
+
+document.getElementById("profileModal").style.display="block";
+
+}
+
+function closeProfile(){
+document.getElementById("profileModal").style.display="none";
+}
+
+async function loadStorage(){
+
+const res = await fetch(API+"/storage",{
+headers:{
+Authorization: "Bearer " + localStorage.getItem("token")
+}
+});
+
+const data = await res.json();
+
+const bar = document.getElementById("storageBar");
+
+bar.style.width = Math.max(Math.min(data.percent,100),5) + "%";
+
+let used = parseFloat(data.used);
+
+if(used < 1){
+bar.innerText = (used*1024).toFixed(2) + " KB";
+}else{
+bar.innerText = used.toFixed(2) + " MB";
+}
+}
+
+async function renameFile(oldName){
+
+const displayName = oldName.split('-').slice(1).join('-');
+
+const newName = prompt("Enter new file name:", displayName);
+
+if(!newName) return;
+
+const prefix = oldName.split('-')[0];
+const ext = oldName.split('.').pop();
+
+const finalName = prefix + "-" + newName + "." + ext;
+
+await fetch(API+"/rename",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization: "Bearer " + localStorage.getItem("token")
+},
+
+body: JSON.stringify({
+oldName: oldName,
+newName: finalName
+})
+
+});
+
+showToast("File renamed successfully");
+
+loadFiles();
+loadStorage();
+
+}
+
+function formatSize(bytes){
+
+if(!bytes) return "0 KB";
+
+if(bytes >= 1024 * 1024){
+return (bytes/(1024*1024)).toFixed(2) + " MB";
+}
+
+if(bytes >= 1024){
+return (bytes/1024).toFixed(2) + " KB";
+}
+
+return bytes + " B";
+
+}
+
+document.addEventListener("click", function(e){
+
+if(e.target.classList.contains("deleteBtn")){
+deleteFile(e.target.dataset.name);
+}
+
+if(e.target.classList.contains("removeSharedBtn")){
+deleteFile(e.target.dataset.name);
+}
+
+});
+async function shareFile(filename){
+
+const email = prompt("Enter user email to share:");
+
+if(!email) return;
+
+const res = await fetch(API+"/share",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization: "Bearer " + localStorage.getItem("token")
+},
+
+body: JSON.stringify({
+fileName: filename,
+email: email
+})
+
+});
+
+const data = await res.json();
+
+if(res.status !== 200){
+    showToast(data.message, "error");
+}else{
+    showToast(data.message);
+}
+}
+
+async function generateLink(filename){
+
+const res = await fetch(API + "/public-link",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization: "Bearer " + localStorage.getItem("token")
+},
+
+body: JSON.stringify({
+fileName: filename
+})
+
+});
+
+const data = await res.json();
+
+navigator.clipboard.writeText(data.link);
+
+showToast("Public link copied");
+
+}
+
+function showToast(message, type="success"){
+
+const toastEl = document.getElementById("toastBox");
+const toastMsg = document.getElementById("toastMsg");
+
+toastEl.classList.remove("text-bg-success","text-bg-danger");
+
+if(type === "error"){
+toastEl.classList.add("text-bg-danger");
+}else{
+toastEl.classList.add("text-bg-success");
+}
+
+toastMsg.innerText = message;
+
+const toast = new bootstrap.Toast(toastEl);
+toast.show();
+
+}
+
+function displayMyFiles(files){
+files.sort((a,b)=>{
+return (isFavorite(b.name) - isFavorite(a.name));
+});
+
+const table = document.getElementById("myFileList");
+table.innerHTML = "";
+
+files.forEach(file=>{
+
+const row = document.createElement("tr");
+
+row.innerHTML = `
+<td>
+<button class="btn btn-sm ${isFavorite(file.name) ? 'btn-warning' : 'btn-outline-secondary'}"
+onclick="toggleFavorite('${file.name}')">⭐</button>
+</td>
+
+<td onclick='showDetails(${JSON.stringify(file)})' style="cursor:pointer">
+${getFileIcon(file.name)} ${file.name.split('-').slice(1).join('-')}
+</td>
+<td>${formatSize(file.size)}</td>
+
+<td><button class="btn btn-info btn-sm" onclick="previewFile('${file.name}')">Preview</button></td>
+
+<td><a class="btn btn-success btn-sm" href="${API}/download/${encodeURIComponent(file.name)}">Download</a></td>
+
+<td><button class="btn btn-warning btn-sm" onclick="renameFile('${file.name}')">Rename</button></td>
+
+<td><button class="btn btn-primary btn-sm" onclick="shareFile('${file.name}')">Share</button></td>
+
+<td><button class="btn btn-dark btn-sm" onclick="generateLink('${file.name}')">Link</button></td>
+
+<td><button class="btn btn-danger btn-sm deleteBtn" data-name="${file.name}">Delete</button></td>
+`;
+
+table.appendChild(row);
+
+});
+document.getElementById("fileCount").innerText =
+"Total Files: " + files.length;
+
+if(files.length === 0){
+table.innerHTML = `<tr><td colspan="9" class="text-center text-muted">
+No files found
+</td></tr>`;
+}
+}
+
+function applyFilters(){
+
+let files = [...allFiles];
+
+// search
+const query = document.getElementById("searchInput").value.toLowerCase();
+if(query){
+files = files.filter(f => f.name.toLowerCase().includes(query));
+}
+
+// type filter
+const type = document.getElementById("typeFilter").value;
+
+if(type){
+files = files.filter(f=>{
+const ext = f.name.split('.').pop().toLowerCase();
+
+if(type === "image") return ["png","jpg","jpeg","gif"].includes(ext);
+if(type === "video") return ["mp4","mkv"].includes(ext);
+if(type === "pdf") return ext === "pdf";
+if(type === "doc") return ["doc","docx","xls","xlsx"].includes(ext);
+if(type === "zip") return ["zip","rar"].includes(ext);
+
+return true;
+});
+}
+
+// ⭐ favorites first
+files.sort((a,b)=>{
+return (isFavorite(b.name) - isFavorite(a.name));
+});
+
+// sort
+const option = document.getElementById("sortSelect").value;
+
+if(option === "name"){
+files.sort((a,b)=> a.name.localeCompare(b.name));
+}
+
+if(option === "size"){
+files.sort((a,b)=> (a.size || 0) - (b.size || 0));
+}
+
+if(option === "type"){
+files.sort((a,b)=>{
+const extA = a.name.split('.').pop();
+const extB = b.name.split('.').pop();
+return extA.localeCompare(extB);
+});
+}
+
+displayMyFiles(files);
+
+}
+function getFavorites(){
+return JSON.parse(localStorage.getItem("favorites") || "[]");
+}
+
+function isFavorite(name){
+return favoriteFiles.includes(name);
+}
+
+async function toggleFavorite(name){
+
+const res = await fetch(API + "/favorite",{
+
+method:"POST",
+
+headers:{
+"Content-Type":"application/json",
+Authorization: "Bearer " + localStorage.getItem("token")
+},
+
+body: JSON.stringify({
+fileName: name
+})
+
+});
+let data;
+try {
+data = await res.json();
+} catch {
+console.error("Invalid JSON response");
+return;
+}
+
+favoriteFiles = data.favorites;
+
+applyFilters();
+
+}
+
+function showDetails(file){
+
+document.getElementById("detailName").innerText = file.name;
+
+document.getElementById("detailSize").innerText = formatSize(file.size);
+
+document.getElementById("detailType").innerText =
+file.name.split('.').pop();
+
+/* ✅ Upload Date */
+document.getElementById("detailDate").innerText =
+new Date(file.createdAt).toLocaleString();
+
+/* ✅ Owner Name */
+document.getElementById("detailOwner").innerText =
+file.owner?.name || "Unknown";
+
+/* ✅ Shared With */
+const names = file.sharedWith?.map(u => u.name).join(", ");
+
+document.getElementById("detailShared").innerText =
+file.sharedWith && file.sharedWith.length > 0
+  ? names
+  : "Not shared";
+document.getElementById("fileDetailsModal").style.display = "block";
+}
+function closeDetails(){
+document.getElementById("fileDetailsModal").style.display = "none";
+}
+
+function displaySharedFiles(files){
+
+const table = document.getElementById("sharedFileList");
+table.innerHTML = "";
+
+files.forEach(file=>{
+
+const row = document.createElement("tr");
+
+row.innerHTML = `
+<td>${getFileIcon(file.name)} ${file.name.split('-').slice(1).join('-')}</td>
+<td>${formatSize(file.size)}</td>
+
+<td><button class="btn btn-info btn-sm" onclick="previewFile('${file.name}')">Preview</button></td>
+
+<td><a class="btn btn-success btn-sm" href="${API}/download/${encodeURIComponent(file.name)}">Download</a></td>
+
+<td><button class="btn btn-danger btn-sm removeSharedBtn" data-name="${file.name}">Remove</button></td>
+`;
+
+table.appendChild(row);
+
+});
+
+}
+
+function showTab(type){
+
+const my = document.getElementById("myFilesSection");
+const shared = document.getElementById("sharedFilesSection");
+const trash = document.getElementById("trashSection");
+
+const myTab = document.getElementById("myTab");
+const sharedTab = document.getElementById("sharedTab");
+const trashTab = document.getElementById("trashTab");
+
+if(type === "my"){
+my.style.display="block";
+shared.style.display="none";
+trash.style.display="none";
+
+myTab.classList.add("active");
+sharedTab.classList.remove("active");
+trashTab.classList.remove("active");
+}
+
+else if(type === "shared"){
+my.style.display="none";
+shared.style.display="block";
+trash.style.display="none";
+
+myTab.classList.remove("active");
+sharedTab.classList.add("active");
+trashTab.classList.remove("active");
+}
+
+else if(type === "trash"){
+my.style.display="none";
+shared.style.display="none";
+trash.style.display="block";
+
+myTab.classList.remove("active");
+sharedTab.classList.remove("active");
+trashTab.classList.add("active");
+
+loadTrash();
+}
+}
+</script>
+<div class="position-fixed top-0 end-0 p-3" style="z-index: 9999">
+  <div id="toastBox" class="toast align-items-center text-bg-success border-0">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMsg"></div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+<div id="fileDetailsModal" style="
+display:none;
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:rgba(0,0,0,0.6);
+">
+
+<div style="
+background:white;
+width:400px;
+margin:10% auto;
+padding:20px;
+border-radius:10px;
+">
+
+<h4>File Details</h4>
+
+<p><b>Name:</b> <span id="detailName"></span></p>
+<p><b>Size:</b> <span id="detailSize"></span></p>
+<p><b>Type:</b> <span id="detailType"></span></p>
+<p><b>Upload Date:</b> <span id="detailDate"></span></p>
+<p><b>Owner:</b> <span id="detailOwner"></span></p>
+<p><b>Shared With:</b> <span id="detailShared"></span></p>
+
+<button class="btn btn-danger" onclick="closeDetails()">Close</button>
+
+</div>
+</div>
+</body>
+</html>
