@@ -519,7 +519,8 @@ const content = document.getElementById("previewContent");
 
 const ext = filename.split('.').pop().toLowerCase();
 
-const fileURL = API + "/view/" + encodeURIComponent(filename);
+const file = allFiles.find(f => f.name === filename);
+const fileURL = file?.path;
 
 content.innerHTML="";
 
@@ -825,7 +826,7 @@ ${getFileIcon(file.name)} ${file.name.split('-').slice(1).join('-')}
 
 <td><button class="btn btn-info btn-sm" onclick="previewFile('${file.name}')">Preview</button></td>
 
-<td><a class="btn btn-success btn-sm" href="${API}/download/${encodeURIComponent(file.name)}">Download</a></td>
+<td><a class="btn btn-success btn-sm" href="${file.path}">Download</a></td>
 
 <td><button class="btn btn-warning btn-sm" onclick="renameFile('${file.name}')">Rename</button></td>
 
@@ -986,7 +987,7 @@ row.innerHTML = `
 
 <td><button class="btn btn-info btn-sm" onclick="previewFile('${file.name}')">Preview</button></td>
 
-<td><a class="btn btn-success btn-sm" href="${API}/download/${encodeURIComponent(file.name)}">Download</a></td>
+<td><a class="btn btn-success btn-sm" href="${file.path}">Download</a></td>
 
 <td><button class="btn btn-danger btn-sm removeSharedBtn" data-name="${file.name}">Remove</button></td>
 `;
