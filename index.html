@@ -233,7 +233,7 @@ text-align:center;
 
 <script>
 
-const API = "https://fileshare-backend-9tyy.onrender.com//api";
+const API = "https://fileshare-backend-9tyy.onrender.com";
 let allFiles = [];
 let favoriteFiles = [];
 async function uploadFile(){
@@ -253,7 +253,7 @@ const progressBar = document.getElementById("uploadProgress");
 
 const xhr = new XMLHttpRequest();
 
-xhr.open("POST", API+"/upload", true);
+xhr.open("POST", API+"/api/upload", true);
 
 xhr.setRequestHeader("Authorization","Bearer " + localStorage.getItem("token"));
 
@@ -312,7 +312,7 @@ default: return "📁";
 
 async function loadFiles(){
 
-const res = await fetch(API + "/files",{
+const res = await fetch(API + "/api/files",{
 headers:{
 Authorization: "Bearer " + localStorage.getItem("token")
 }
@@ -430,7 +430,7 @@ table.appendChild(row);
 
 async function deleteFile(filename){
 
-await fetch(API+"/delete/"+encodeURIComponent(filename),{
+await fetch(API+"/api/delete/"+encodeURIComponent(filename),{
 method:"DELETE",
 headers:{
 Authorization: "Bearer " + localStorage.getItem("token")
@@ -448,7 +448,7 @@ await loadStorage();  // Storage update (IMPORTANT)
 
 async function permanentDelete(name){
 
-await fetch(API+"/delete-permanent/"+encodeURIComponent(name),{
+await fetch(API+"/api/delete-permanent/"+encodeURIComponent(name),{
 method:"DELETE",
 headers:{
 Authorization:"Bearer " + localStorage.getItem("token")
@@ -464,7 +464,7 @@ await loadStorage();
 
 async function restoreFile(name){
 
-await fetch(API+"/restore",{
+await fetch(API+"/api/restore",{
 method:"POST",
 headers:{
 "Content-Type":"application/json",
@@ -482,7 +482,7 @@ await loadFiles();
 
 async function loadTrash(){
 
-const res = await fetch(API + "/trash",{
+const res = await fetch(API + "/api/trash",{
 headers:{
 Authorization: "Bearer " + localStorage.getItem("token")
 }
@@ -572,7 +572,7 @@ async function uploadDroppedFile(file){
 const formData = new FormData();
 formData.append("file",file);
 
-await fetch(API+"/upload",{
+await fetch(API+"/api/upload",{
 method:"POST",
 headers:{
 Authorization:"Bearer " + localStorage.getItem("token")
@@ -596,7 +596,7 @@ async function loadFavorites(){
 
 try{
 
-const res = await fetch(API + "/favorites",{
+const res = await fetch(API + "/api/favorites",{
 headers:{
 Authorization: "Bearer " + localStorage.getItem("token")
 }
@@ -619,7 +619,7 @@ console.error("Favorites error:", err);
 
 async function loadProfile(){
 
-const res = await fetch(API + "/profile",{
+const res = await fetch(API + "/api/profile",{
 headers:{
 Authorization:"Bearer " + localStorage.getItem("token")
 }
@@ -640,7 +640,7 @@ document.getElementById("profileModal").style.display="none";
 
 async function loadStorage(){
 
-const res = await fetch(API+"/storage",{
+const res = await fetch(API+"/api/storage",{
 headers:{
 Authorization: "Bearer " + localStorage.getItem("token")
 }
@@ -674,7 +674,7 @@ const ext = oldName.split('.').pop();
 
 const finalName = prefix + "-" + newName + "." + ext;
 
-await fetch(API+"/rename",{
+await fetch(API+"/api/rename",{
 
 method:"POST",
 
@@ -730,7 +730,7 @@ const email = prompt("Enter user email to share:");
 
 if(!email) return;
 
-const res = await fetch(API+"/share",{
+const res = await fetch(API+"/api/share",{
 
 method:"POST",
 
@@ -757,7 +757,7 @@ if(res.status !== 200){
 
 async function generateLink(filename){
 
-const res = await fetch(API + "/public-link",{
+const res = await fetch(API + "/api/public-link",{
 
 method:"POST",
 
@@ -913,7 +913,7 @@ return favoriteFiles.includes(name);
 
 async function toggleFavorite(name){
 
-const res = await fetch(API + "/favorite",{
+const res = await fetch(API + "/api/favorite",{
 
 method:"POST",
 
