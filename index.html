@@ -275,7 +275,11 @@ xhr.onload = function(){
 progressBar.style.width="0%";
 progressBar.innerText="0%";
 
+if(xhr.status === 200){
 showToast("File uploaded successfully");
+}else{
+showToast("Upload failed","error");
+}
 
 loadFiles();
 loadStorage();
@@ -517,10 +521,15 @@ function previewFile(filename){
 const modal = document.getElementById("previewModal");
 const content = document.getElementById("previewContent");
 
-const ext = filename.split('.').pop().toLowerCase();
-
 const file = allFiles.find(f => f.name === filename);
-const fileURL = file?.path;
+
+if(!file || !file.path){
+showToast("File not found","error");
+return;
+}
+
+const fileURL = file.path;
+const ext = filename.split('.').pop().toLowerCase();
 
 content.innerHTML="";
 
@@ -530,6 +539,10 @@ content.innerHTML=`<img src="${fileURL}" style="max-width:100%">`;
 
 else if(ext==="pdf"){
 content.innerHTML=`<iframe src="${fileURL}" style="width:100%;height:100%"></iframe>`;
+}
+
+else{
+content.innerHTML=`<p>Preview not supported</p>`;
 }
 
 modal.style.display="block";
@@ -810,6 +823,7 @@ const table = document.getElementById("myFileList");
 table.innerHTML = "";
 
 files.forEach(file=>{
+if(!file || !file.name) return;
 
 const row = document.createElement("tr");
 
@@ -819,8 +833,10 @@ row.innerHTML = `
 onclick="toggleFavorite('${file.name}')">⭐</button>
 </td>
 
-<td onclick='showDetails(${JSON.stringify(file)})' style="cursor:pointer">
-${getFileIcon(file.name)} ${file.name.split('-').slice(1).join('-')}
+<td onclick="showDetails(${encodeURIComponent(JSON.stringify(file))})" style="cursor:pointer">
+${getFileIcon(file.name)} ${file.name.includes('-') 
+  ? file.name.split('-').slice(1).join('-') 
+  : file.name}
 </td>
 <td>${formatSize(file.size)}</td>
 
@@ -942,7 +958,9 @@ applyFilters();
 
 }
 
-function showDetails(file){
+function showDetails(encodedFile){
+
+const file = JSON.parse(decodeURIComponent(encodedFile));
 
 document.getElementById("detailName").innerText = file.name;
 
@@ -978,11 +996,13 @@ const table = document.getElementById("sharedFileList");
 table.innerHTML = "";
 
 files.forEach(file=>{
-
+if(!file || !file.name) return;
 const row = document.createElement("tr");
 
 row.innerHTML = `
-<td>${getFileIcon(file.name)} ${file.name.split('-').slice(1).join('-')}</td>
+<td>${getFileIcon(file.name)} ${file.name.includes('-') 
+  ? file.name.split('-').slice(1).join('-') 
+  : file.name}</td>
 <td>${formatSize(file.size)}</td>
 
 <td><button class="btn btn-info btn-sm" onclick="previewFile('${file.name}')">Preview</button></td>
