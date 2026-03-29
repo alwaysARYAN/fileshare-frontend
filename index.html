@@ -528,7 +528,7 @@ showToast("File not found","error");
 return;
 }
 
-const fileURL = file.path;
+const fileURL = file.url;
 const ext = filename.split('.').pop().toLowerCase();
 
 content.innerHTML="";
@@ -833,16 +833,14 @@ row.innerHTML = `
 onclick="toggleFavorite('${file.name}')">⭐</button>
 </td>
 
-<td onclick="showDetails(${encodeURIComponent(JSON.stringify(file))})" style="cursor:pointer">
-${getFileIcon(file.name)} ${file.name.includes('-') 
-  ? file.name.split('-').slice(1).join('-') 
-  : file.name}
+<td onclick='showDetails("${encodeURIComponent(JSON.stringify(file))}")' style="cursor:pointer">
+${getFileIcon(file.name)} ${file.name}
 </td>
 <td>${formatSize(file.size)}</td>
 
 <td><button class="btn btn-info btn-sm" onclick="previewFile('${file.name}')">Preview</button></td>
 
-<td><a class="btn btn-success btn-sm" href="${file.path}">Download</a></td>
+<td><a class="btn btn-success btn-sm" href="${file.url}">Download</a></td>
 
 <td><button class="btn btn-warning btn-sm" onclick="renameFile('${file.name}')">Rename</button></td>
 
@@ -1007,7 +1005,7 @@ row.innerHTML = `
 
 <td><button class="btn btn-info btn-sm" onclick="previewFile('${file.name}')">Preview</button></td>
 
-<td><a class="btn btn-success btn-sm" href="${file.path}">Download</a></td>
+<td><a class="btn btn-success btn-sm" href="${file.url}">Download</a></td>
 
 <td><button class="btn btn-danger btn-sm removeSharedBtn" data-name="${file.name}">Remove</button></td>
 `;
