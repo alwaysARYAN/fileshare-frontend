@@ -194,9 +194,10 @@ overflow:auto;
 
 <body>
 
-<div class="container">
-
-<h2 class="text-center mt-4">Secure File Sharing Dashboard</h2>
+<div class="d-flex justify-content-between align-items-center mt-4">
+<h3 style="font-weight:600; letter-spacing:1px; text-shadow:0 0 10px #38bdf8;" >
+<span style="color:#38bdf8;">☁️ Cloud</span>Vault Dashboard
+</h3>
 
 <div class="text-end">
 <button class="btn btn-info" onclick="loadProfile()">Profile</button>
@@ -216,7 +217,8 @@ border-radius:10px;
 background:#f8f9fa;
 ">
 
-Drag & Drop File Here
+<h5>📁 Drag & Drop Files Here</h5>
+<p>or click to upload</p>
 
 </div>
 <h5>Storage Usage</h5>
@@ -354,15 +356,25 @@ background:rgba(0,0,0,0.7);
 ">
 
 <div style="
-background:white;
+background: rgba(30,41,59,0.6);
+backdrop-filter: blur(20px);
 width:80%;
 height:80%;
 margin:5% auto;
 padding:20px;
-border-radius:10px;
+border-radius:20px;
+border:1px solid rgba(255,255,255,0.1);
+box-shadow:0 0 40px rgba(0,0,0,0.6);
+color:white;
+transition:0.3s;
 ">
 
-<button onclick="closePreview()" class="btn btn-danger">Close</button>
+<button onclick="closePreview()" class="btn btn-danger" style="
+border-radius:10px;
+padding:6px 15px;
+">
+❌ Close
+</button>
 
 <div id="previewContent" style="width:100%;height:90%;overflow:auto;"></div>
 
