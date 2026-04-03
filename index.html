@@ -18,7 +18,7 @@ font-family:'Poppins',sans-serif;
 margin-top:40px;
 background: rgba(30,41,59,0.7);
 backdrop-filter: blur(12px);
-padding:25px;
+padding:25px; 
 border-radius:20px;
 box-shadow:0 0 40px rgba(0,0,0,0.5);
 border:1px solid rgba(255,255,255,0.05);
@@ -194,6 +194,49 @@ margin: 40px auto;
 
 #dropArea{
 background: rgba(15,23,42,0.7) !important;
+}
+
+
+#fileDetailsModal{
+background: rgba(0,0,0,0.6) !important;
+backdrop-filter: blur(8px);
+}
+
+#fileDetailsModal > div{
+background: rgba(30,41,59,0.6) !important;
+backdrop-filter: blur(20px);
+border-radius:20px;
+padding:25px;
+border:1px solid rgba(255,255,255,0.1);
+box-shadow:0 0 30px rgba(0,0,0,0.5);
+color:white;
+transition:0.3s;
+}
+
+#fileDetailsModal > div:hover{
+transform:scale(1.02);
+}
+
+/* Text styling */
+#fileDetailsModal h4{
+font-weight:600;
+margin-bottom:15px;
+}
+
+#fileDetailsModal p{
+color:#cbd5f5;
+margin:8px 0;
+}
+
+#fileDetailsModal span{
+color:#38bdf8;
+font-weight:500;
+}
+
+/* Button */
+#fileDetailsModal .btn{
+border-radius:10px;
+padding:6px 15px;
 }
 </style>
 
@@ -1275,11 +1318,9 @@ background:rgba(0,0,0,0.6);
 ">
 
 <div style="
-background:white;
 width:400px;
 margin:10% auto;
 padding:20px;
-border-radius:10px;
 ">
 
 <h4>File Details</h4>
